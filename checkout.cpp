@@ -14,10 +14,10 @@ using namespace std;
 //TOC
 //---ctrl+f search any of the following:
 //Prototypes
+//Primary Functions
 //Utilities
 //Read Functions
 //Write Functions
-//Primary Functions
 //Person Handlers
 //Book Handlers
 //main
@@ -46,6 +46,186 @@ Person * searchByName(vector<Person *> & myCardHolders, string fullName);
 void closeCard(vector<Person *> & myCardholders);
 void writePersons(vector<Person *> myCardholders);
 void writeRentals(vector<Book *> myBooks, vector<Person *> myCardholders);
+
+//------------
+//Primary Functions
+//------------
+
+//Book checkout flow
+//User is asked for member id and book id
+//If all are valid, the rental is carried out and book object is set a person pointer
+void checkoutBook(vector<Person *> & myCardholders, vector<Book *> & myBooks){
+    Person * ptrPerson = getValidPerson(myCardholders);
+
+    if(ptrPerson != nullptr){
+
+        Book * ptrBook = getAvailBook(myBooks);
+
+        if (ptrBook != nullptr){
+
+            if(ptrBook->getPersonPtr() == nullptr){
+
+                ptrBook->setPersonPtr(ptrPerson);
+                cout << "The book, " << ptrBook->getTitle() << ", will be checked out by " << ptrBook->getPersonPtr()->fullName() << endl;
+                cout << "Rental completed" << endl;
+            }
+            else{
+                cout << "Book already checked out" << endl;
+            }
+        }
+    }
+
+}
+
+//Book return flow
+void returnBook(vector<Book *> & myBooks){
+
+    //need to select the book by id
+    //use searchBook function
+    //if book is checked out, update book object to clear its person ptr
+    //if book is not checked out, do nothing
+
+    Book * ptr = nullptr;
+
+    cout << "Please enter the book ID to return: " << endl;
+    int id;
+    cin >> id;
+
+    if(!cin.fail()){
+
+        cinFullClear();
+        ptr = searchBook(myBooks, id);
+
+        if(ptr != nullptr){
+
+            cout << "Title: " << ptr->getTitle() << endl;
+            ptr->setPersonPtr(nullptr);
+            cout << "Return completed" << endl;
+        }
+        else{
+            cout << "Book ID not found." << endl;
+        }
+    }
+    else{
+        cinFullClear();
+        cout << "Invalid text" << endl;
+    }
+}
+
+void listAvailableBooks(vector<Book *> & myBooks){
+    //iterate through vector
+    //check value of personPtr
+    //if nullptr, cout the getters
+    //if not nullptr, do nothing
+    Person * ptr;
+    //flag that raises when there are available books
+    bool available = false;
+
+    for(int i = 0; i < myBooks.size(); i++){
+
+        ptr = myBooks.at(i)->getPersonPtr();
+        if (ptr == nullptr){
+
+            cout << "\nBook ID: " << myBooks.at(i)->getId() << endl;
+            cout << "Title: " << myBooks.at(i)->getTitle() << endl;
+            cout << "Author: " << myBooks.at(i)->getAuthor() << endl;
+            cout << "Category: " << myBooks.at(i)->getCategory() << endl;
+            available = true;
+        }
+    }
+    if(available = false){
+        cout << "No available books" << endl;
+    }
+}
+
+void listRentals(vector<Book *> & myBooks){
+    Person * ptr;
+    //flag that raises when there are no available books
+    bool checkedout = false;
+    for(int i = 0; i < myBooks.size(); i++){
+
+        ptr = myBooks.at(i)->getPersonPtr();
+
+        if (ptr != nullptr){
+
+            cout << "\nBook ID: " << myBooks.at(i)->getId() << endl;
+            cout << "Title: " << myBooks.at(i)->getTitle() << endl;
+            cout << "Author: " << myBooks.at(i)->getAuthor() << endl;
+            cout << "Cardholder: " << ptr->fullName() << endl;
+            cout << "Card ID: " << ptr->getId() << endl;
+            checkedout = true;
+        }
+    }
+    if(checkedout = false){
+        cout << "No outstanding rentals" << endl;
+    }
+}
+
+void listMemberRentals(vector<Book *> & myBooks, vector<Person *> & myCardholders){
+    Person * personPtr = getValidPerson(myCardholders);
+
+    bool myFlag = false;
+    for(int i = 0; i < myBooks.size(); i++){
+
+        if(myBooks.at(i)->getPersonPtr() == personPtr){
+
+            cout << "\nBook ID: " << myBooks.at(i)->getId() << endl;
+            cout << "Title: " << myBooks.at(i)->getTitle() << endl;
+            cout << "Author: " << myBooks.at(i)->getAuthor() << endl;
+            myFlag = true;
+        }
+    }
+    if(myFlag == false){
+        cout << "No books currently checked out" << endl;
+    }
+}
+
+void openCard(vector<Person *> & myCardholders, int newId){
+    //get name from user
+    //concatenate to fullname
+    //function to compare fullnames
+    //--if fullnames are the same, return pointer to person in vector
+    //if person pointer is nullptr, create a new cardholder
+    //else if person pointer is not nullptr,  set person to active
+    cout << "Please enter the first name: ";
+    string fName;
+    cin >> fName;
+    cout << "Please enter the last name: ";
+    string lName;
+    cin >> lName;
+    string fullName = fName + " " + lName;
+
+    Person * personPtr = searchByName(myCardholders, fullName);
+
+    if (personPtr == nullptr){
+
+        //create cardholder
+        myCardholders.push_back(new Person(newId, true, fName, lName));
+        personPtr = myCardholders.back();
+    }
+    else{
+        //make active
+        personPtr->setActive(true);
+    }
+    cout << "Card ID " << personPtr->getId() << " active" << endl;
+    cout << "Cardholder: " << personPtr->fullName() << endl;
+}
+
+void closeCard(vector<Person *> & myCardholders){
+    Person * personPtr = getValidPerson(myCardholders);
+
+    if (personPtr != nullptr){
+
+        cout << "Are you sure you want to deactivate card(y/n)? ";
+        char yn;
+        cin >> yn;
+        if (yn == 'y'){
+            
+            personPtr->setActive(false);
+            cout << "Card Deactivated" << endl;
+        }
+    }
+}
 
 //-----------
 //Utilities
@@ -89,6 +269,7 @@ void readBooks(vector<Book *> & myBooks) {
         myBooks.push_back(new Book(id, bookName, auth, cat));
         
     }
+    //note to self on syntax:
     //myBooks.at(0) is the vector way of referring to that element
     //-> is how you can dereference the pointer within
     //getAuthor() is the member function
@@ -99,17 +280,20 @@ void readBooks(vector<Book *> & myBooks) {
 
 int readPersons(vector<Person *> & myCardholders) {
     ifstream in("persons.txt");
+    //going to hold the highest id available + 1
     int nextId = 0;
     int cardNo;
     bool act;
     string fName, lName;
 
+    //read line by line into variables
     while (in >> cardNo >> act >> fName >> lName){
+        //push_back variables directly into a new Person within the vector
         myCardholders.push_back(new Person(cardNo, act, fName, lName));
         if(cardNo >= nextId){
+            //assign next possible id
             nextId = cardNo + 1;
         }
-        //cout << cardNo << " " << act << " " << fName << lName << endl;
     }
     in.close();
     return nextId;
@@ -119,15 +303,19 @@ int readPersons(vector<Person *> & myCardholders) {
 //respective book objects in the books vector
 void readRentals(vector<Book *> & myBooks, vector<Person *> myCardholders) {
     ifstream in("rentals.txt");
+    //empty pointers to search linked Persons and Books returned from rentals file
     Person * personPtr;
     Book * bookPtr;
 
     int book, card;
+    //line-by-line, put the book id and card id into the variables
     while(in >> book >> card){
+        //search out the person and point to it
         personPtr = searchPerson(myCardholders, card);
+        //search out the book and point to it
         bookPtr = searchBook(myBooks, book);
+        //link the person with the book in the book object by sending its pointer to setPersonPtr
         bookPtr->setPersonPtr(personPtr);
-        //cout << bookPtr->getPersonPtr()->fullName() << endl;
     }
 
     return;
@@ -140,6 +328,7 @@ void readRentals(vector<Book *> & myBooks, vector<Person *> myCardholders) {
 void writePersons(vector<Person *> myCardholders){
     ofstream wr("persons.txt");
 
+    //no major logic here. just read each cardholder's info out with proper formatting
     for(int i=0; i < myCardholders.size(); i++){
         wr << myCardholders.at(i)->getId() << " "
         << myCardholders.at(i)->isActive() << " "
@@ -151,6 +340,7 @@ void writePersons(vector<Person *> myCardholders){
 void writeRentals(vector<Book *> myBooks){
     ofstream wr("rentals.txt");
 
+    //check each book object for a pointer to a person, then read in the book id and person id
     for(int i=0; i < myBooks.size(); i++){
         if(myBooks.at(i)->getPersonPtr() != nullptr){
             wr << myBooks.at(i)->getId() << " " << myBooks.at(i)->getPersonPtr()->getId() << "\n";
@@ -158,168 +348,7 @@ void writeRentals(vector<Book *> myBooks){
     }
     wr.close();
 }
-//------------
-//Primary Functions
-//------------
 
-//Book checkout flow
-//User is asked for member id and book id
-//If all are valid, the rental is carried out and book object is set a person pointer
-void checkoutBook(vector<Person *> & myCardholders, vector<Book *> & myBooks){
-    Person * ptrPerson = getValidPerson(myCardholders);
-
-    if(ptrPerson != nullptr){
-        Book * ptrBook = getAvailBook(myBooks);
-        if (ptrBook != nullptr){
-            if(ptrBook->getPersonPtr() == nullptr){
-                ptrBook->setPersonPtr(ptrPerson);
-                cout << "The book, " << ptrBook->getTitle() << ", will be checked out by " << ptrBook->getPersonPtr()->fullName() << endl;
-                cout << "Rental completed" << endl;
-            }
-            else{
-                cout << "Book already checked out" << endl;
-            }
-        }
-    }
-
-}
-
-//Book return flow
-void returnBook(vector<Book *> & myBooks){
-
-    //need to select the book by id
-    //use searchBook function
-    //if book is checked out, update book object to clear its person ptr
-    //if book is not checked out, do nothing
-
-    Book * ptr = nullptr;
-
-    cout << "Please enter the book ID to return: " << endl;
-    int id;
-    cin >> id;
-
-    if(!cin.fail()){
-        cinFullClear();
-        ptr = searchBook(myBooks, id);
-
-        if(ptr != nullptr){
-            cout << "Title: " << ptr->getTitle() << endl;
-            ptr->setPersonPtr(nullptr);
-            cout << "Return completed" << endl;
-        }
-        else{
-            cout << "Book ID not found." << endl;
-        }
-    }
-    else{
-        cinFullClear();
-        cout << "Invalid text" << endl;
-    }
-}
-
-void listAvailableBooks(vector<Book *> & myBooks){
-    //iterate through vector
-    //check value of personPtr
-    //if nullptr, cout the getters
-    //if not nullptr, do nothing
-    Person * ptr;
-    //flag that raises when there are available books
-    bool available = false;
-    for(int i = 0; i < myBooks.size(); i++){
-        ptr = myBooks.at(i)->getPersonPtr();
-        if (ptr == nullptr){
-            cout << "\nBook ID: " << myBooks.at(i)->getId() << endl;
-            cout << "Title: " << myBooks.at(i)->getTitle() << endl;
-            cout << "Author: " << myBooks.at(i)->getAuthor() << endl;
-            cout << "Category: " << myBooks.at(i)->getCategory() << endl;
-            available = true;
-        }
-    }
-    if(available = false){
-        cout << "No available books" << endl;
-    }
-}
-
-void listRentals(vector<Book *> & myBooks){
-    Person * ptr;
-    //flag that raises when there are no available books
-    bool checkedout = false;
-    for(int i = 0; i < myBooks.size(); i++){
-        ptr = myBooks.at(i)->getPersonPtr();
-        if (ptr != nullptr){
-            cout << "\nBook ID: " << myBooks.at(i)->getId() << endl;
-            cout << "Title: " << myBooks.at(i)->getTitle() << endl;
-            cout << "Author: " << myBooks.at(i)->getAuthor() << endl;
-            cout << "Cardholder: " << ptr->fullName() << endl;
-            cout << "Card ID: " << ptr->getId() << endl;
-            checkedout = true;
-        }
-    }
-    if(checkedout = false){
-        cout << "No outstanding rentals" << endl;
-    }
-}
-
-void listMemberRentals(vector<Book *> & myBooks, vector<Person *> & myCardholders){
-    Person * personPtr = getValidPerson(myCardholders);
-
-    bool myFlag = false;
-    for(int i = 0; i < myBooks.size(); i++){
-        if(myBooks.at(i)->getPersonPtr() == personPtr){
-            cout << "\nBook ID: " << myBooks.at(i)->getId() << endl;
-            cout << "Title: " << myBooks.at(i)->getTitle() << endl;
-            cout << "Author: " << myBooks.at(i)->getAuthor() << endl;
-            myFlag = true;
-        }
-    }
-    if(myFlag == false){
-        cout << "No books currently checked out" << endl;
-    }
-}
-
-void openCard(vector<Person *> & myCardholders, int newId){
-    //get name from user
-    //concatenate to fullname
-    //function to compare fullnames
-    //--if fullnames are the same, return pointer to person in vector
-    //if person pointer is nullptr, create a new cardholder
-    //else if person pointer is not nullptr,  set person to active
-    cout << "Please enter the first name: ";
-    string fName;
-    cin >> fName;
-    cout << "Please enter the last name: ";
-    string lName;
-    cin >> lName;
-    string fullName = fName + " " + lName;
-
-    Person * personPtr = searchByName(myCardholders, fullName);
-
-    if (personPtr == nullptr){
-        //create cardholder
-        myCardholders.push_back(new Person(newId, true, fName, lName));
-        personPtr = myCardholders.back();
-    }
-    else{
-        //make active
-        personPtr->setActive(true);
-    }
-    cout << "Card ID " << personPtr->getId() << " active" << endl;
-    cout << "Cardholder: " << personPtr->fullName() << endl;
-}
-
-void closeCard(vector<Person *> & myCardholders){
-    Person * personPtr = getValidPerson(myCardholders);
-
-    if (personPtr != nullptr){
-        cout << "Are you sure you want to deactivate card(y/n)? ";
-        char yn;
-        cin >> yn;
-        if (yn == 'y'){
-            personPtr->setActive(false);
-            cout << "Card Deactivated" << endl;
-        }
-    }
-}
 //--------------
 //Person Handlers
 //--------------
@@ -330,9 +359,12 @@ Person * searchPerson(vector<Person *> & myCardholders, int id){
     Person * ptr = nullptr;
     int size = myCardholders.size();
     int currId;
+
     for(int i = 0; i < size; i++){
+        //compare id given and currently selected id
         int currId = myCardholders.at(i)->getId();
         if (currId == id){
+            //set pointer to point to the person in vector
             ptr = myCardholders.at(i);
         }
     }
@@ -384,10 +416,12 @@ Person * getValidPerson(vector<Person *> & myCardholders){
     return ptr;
 }
 
+//Search a person by entering their full name and matching strings
 Person * searchByName(vector<Person *> & myCardholders, string fullName){
     Person * ptr = nullptr;
 
     for(int i = 0; i < myCardholders.size(); i++){
+        //use compare() == 0 to determine matched strings
         if(myCardholders.at(i)->fullName().compare(fullName) == 0){
             ptr = myCardholders.at(i);
             cout << "tick" << endl;
@@ -406,9 +440,12 @@ Book * searchBook(vector<Book *> & myBooks, int id){
     Book * ptr = nullptr;
     int size = myBooks.size();
     int currId;
+
     for(int i = 0; i < size; i++){
         currId = myBooks.at(i)->getId();
+        //compare given id and currently selected id
         if(currId == id){
+            //point to the matched book in vector
             ptr = myBooks.at(i);
         }
     }
@@ -426,8 +463,9 @@ Book * getAvailBook(vector<Book *> & myBooks){
 
     if(!cin.fail()){
         cinFullClear();
+        //point to book with the matching id
         ptr = searchBook(myBooks, id);
-
+        //if it exists, print the title
         if(ptr != nullptr){
             cout << "Title: " << ptr->getTitle() << endl;
         }
@@ -504,7 +542,6 @@ int main()
                 
             case 8:
                 // Must update records in files here before exiting the program
-                //cleanPtrs();
                 writePersons(cardholders);
                 writeRentals(books);
                 break;
